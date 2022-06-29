@@ -1,7 +1,10 @@
 package account
 
 import (
+	"errors"
+
 	"github.com/fbsobreira/gotron-sdk/pkg/keys"
+	"github.com/fbsobreira/gotron-sdk/pkg/keystore"
 	"github.com/fbsobreira/gotron-sdk/pkg/mnemonic"
 	"github.com/fbsobreira/gotron-sdk/pkg/store"
 )
@@ -40,4 +43,18 @@ func CreateNewLocalAccount(candidate *Creation) error {
 		return err
 	}
 	return nil
+}
+
+// CreateNewLocalAccountAndReturnIt ...
+func CreateNewLocalAccountAndReturnIt(ks *keystore.KeyStore, candidate *Creation) (acc keystore.Account, err error) {
+	if ks == nil {
+		err = errors.New("keystore is nil")
+		return
+	}
+	if candidate.Mnemonic == "" {
+		candidate.Mnemonic = mnemonic.Generate()
+	}
+	// Hardcoded index of 0 for brandnew account.
+	private, _ := keys.FromMnemonicSeedAndPassphrase(candidate.Mnemonic, candidate.MnemonicPassphrase, 0)
+	return ks.ImportECDSA(private.ToECDSA(), candidate.Passphrase)
 }
